@@ -9,7 +9,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <title>Animação de Alocação de Array</title>
+    <title>Simulação de Alocação de Memória RAM</title>
     <style>
       body {
         font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui,
@@ -69,10 +69,10 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
         flex: 1;
         align-content: flex-start;
-        justify-content: center;
+        justify-content: flex-start;
       }
 
-      .memory-block {
+      .memory-cell {
         width: 85px;
         height: 70px;
         border: 1px solid rgba(255, 255, 255, 0.15);
@@ -90,7 +90,7 @@
         overflow: hidden;
       }
 
-      .memory-block .address {
+      .memory-cell .address {
         font-weight: 500;
         color: rgba(255, 255, 255, 0.4);
         padding: 6px;
@@ -101,7 +101,7 @@
         letter-spacing: -0.03em;
       }
 
-      .memory-block .value {
+      .memory-cell .value {
         font-size: 1.8em;
         font-weight: 600;
         text-align: center;
@@ -114,12 +114,12 @@
       }
 
       /* Estados da Memória */
-      .memory-block.free {
+      .memory-cell.free {
         background: rgba(255, 255, 255, 0.03);
         border-color: rgba(255, 255, 255, 0.08);
       }
 
-      .memory-block.system {
+      .memory-cell.system {
         background: rgba(142, 142, 147, 0.15);
         border-color: rgba(142, 142, 147, 0.4);
         border-width: 1px;
@@ -127,7 +127,7 @@
           inset 0 1px 0 rgba(255, 255, 255, 0.05);
       }
 
-      .memory-block.allocated {
+      .memory-cell.allocated {
         background: rgba(0, 122, 255, 0.15);
         border-color: rgba(0, 122, 255, 0.4);
         border-width: 1px;
@@ -136,7 +136,7 @@
         transform: translateY(-1px);
       }
 
-      .memory-block.highlighted {
+      .memory-cell.highlighted {
         background: rgba(255, 149, 0, 0.2);
         border-color: rgba(255, 149, 0, 0.6);
         border-width: 2px;
@@ -305,7 +305,7 @@
   <body>
     <div id="animation-container">
       <div id="ram-container">
-        <h2>Visualização da Memória RAM</h2>
+        <h2>Simulação de Memória RAM (Bytes)</h2>
         <div id="ram"></div>
       </div>
 
@@ -331,10 +331,17 @@
             <button id="access-btn" disabled>Buscar Índice</button>
           </div>
 
-          <div id="pointer-visual">int* meuArray = NULL;</div>
+          <div id="pointer-visual">meuArray = NULL;</div>
         </div>
 
         <div id="log">
+          <p><strong>MEMÓRIA RAM</strong></p>
+          <p>• Cada quadrado = 1 byte de memória</p>
+          <p>• Endereços hexadecimais (0x1000, 0x1001...)</p>
+          <p>• Array ocupa bytes consecutivos</p>
+          <p>• Acesso: endereço_base + índice</p>
+          <p>• Índices começam em 0 (array[0] é o primeiro)</p>
+          <br />
           <p>Clique em "Alocar Array" para começar...</p>
         </div>
       </div>
@@ -342,14 +349,15 @@
 
     <script>
       // --- Configurações Globais ---
-      const RAM_SIZE = 30; // Número total de blocos na nossa RAM simulada
-      let ARRAY_SIZE = 5; // Tamanho do nosso array de inteiros (agora dinâmico)
-      const SIZEOF_INT = 4; // Tamanho em "bytes" de um int (para cálculo de endereço)
-      const START_ADDRESS = 1000; // Endereço de memória inicial
+      const RAM_SIZE = 24; // Número total de bytes na nossa RAM simulada
+      let ARRAY_SIZE = 5; // Tamanho do nosso array (agora dinâmico)
+      const START_ADDRESS = 0x1000; // Endereço de memória inicial em hexadecimal
+      // Cada célula visual representa 1 byte
+      // Endereços: 0x1000, 0x1001, 0x1002, 0x1003, ... (incremento de 1 byte)
 
       // --- Estado da Aplicação ---
       let arrayBaseAddress = null; // Onde o array foi alocado
-      let allocatedBlocks = []; // Referências para os blocos do DOM
+      let allocatedBlocks = []; // Referências para as células do DOM
 
       // --- Referências do DOM ---
       const ramContainer = document.getElementById("ram");
@@ -374,17 +382,17 @@
 
       /** Limpa destaques anteriores */
       function clearHighlights() {
-        document.querySelectorAll(".memory-block.highlighted").forEach((b) => {
+        document.querySelectorAll(".memory-cell.highlighted").forEach((b) => {
           b.classList.remove("highlighted");
         });
       }
 
       /** Reseta a simulação */
       function resetSimulation() {
-        logMessage("Resetando simulação...");
+        logMessage("Resetando simulação de memória...");
         arrayBaseAddress = null;
         allocatedBlocks = [];
-        pointerVisual.textContent = "int* meuArray = NULL;";
+        pointerVisual.textContent = "meuArray = NULL;";
         allocBtn.disabled = false;
         accessBtn.disabled = true;
         createRAM(); // Recria a RAM
@@ -405,20 +413,24 @@
       function createRAM() {
         ramContainer.innerHTML = ""; // Limpa a RAM antiga
         for (let i = 0; i < RAM_SIZE; i++) {
-          const address = START_ADDRESS + i * SIZEOF_INT;
+          const address = START_ADDRESS + i; // Incremento de 1 byte
           const block = document.createElement("div");
 
-          // Primeiros 4 blocos são ocupados pelo sistema
+          // Primeiras 4 células são ocupadas pelo sistema
           if (i < 4) {
-            block.className = "memory-block system";
+            block.className = "memory-cell system";
             block.innerHTML = `
-                      <span class="address">${address}</span>
+                      <span class="address">0x${address
+                        .toString(16)
+                        .toUpperCase()}</span>
                       <span class="value">📦</span>
                   `;
           } else {
-            block.className = "memory-block free";
+            block.className = "memory-cell free";
             block.innerHTML = `
-                      <span class="address">${address}</span>
+                      <span class="address">0x${address
+                        .toString(16)
+                        .toUpperCase()}</span>
                       <span class="value">?</span>
                   `;
           }
@@ -435,58 +447,82 @@
 
         resetSimulation(); // Reseta se já houver algo
         allocBtn.disabled = true;
-        logMessage(`Iniciando alocação para int meuArray[${ARRAY_SIZE}]...`);
+        logMessage("<strong>MEMÓRIA RAM - CONCEITOS FUNDAMENTAIS</strong>");
+        logMessage("• Array: bytes contíguos | Índices: 0 a N-1 | 24 bytes: alinhamento otimizado");
+        await sleep(2000);
+        logMessage(
+          `Iniciando alocação de memória para meuArray[${ARRAY_SIZE}] bytes...`
+        );
         await sleep(1000);
 
         // Simula a busca por espaço contíguo.
-        // Em vez de um algoritmo complexo, vamos apenas escolher um local fixo (ex: bloco 4)
+        // O gerenciador de memória busca células livres consecutivas
         const startIndex = 4;
-        const allBlocks = document.querySelectorAll(".memory-block");
+        const allCells = document.querySelectorAll(".memory-cell");
 
         logMessage(
-          `Sistema Operacional encontrou ${ARRAY_SIZE} blocos contíguos livres...`
+          `Gerenciador de memória encontrou ${ARRAY_SIZE} células contíguas livres...`
         );
         await sleep(1000);
 
         // Pega o endereço base
-        arrayBaseAddress = parseInt(allBlocks[startIndex].dataset.address);
-        logMessage(`Endereço base alocado: ${arrayBaseAddress}`);
-        pointerVisual.textContent = `int* meuArray = ${arrayBaseAddress};`;
+        arrayBaseAddress = parseInt(allCells[startIndex].dataset.address);
+        logMessage("<strong>ENDEREÇO BASE:</strong>");
+        logMessage(
+          `Primeiro byte do array: 0x${arrayBaseAddress
+            .toString(16)
+            .toUpperCase()}`
+        );
+        logMessage(
+          `array[0] está em: 0x${arrayBaseAddress.toString(16).toUpperCase()}`
+        );
+        logMessage(
+          `array[${ARRAY_SIZE - 1}] estará em: 0x${(
+            arrayBaseAddress +
+            ARRAY_SIZE -
+            1
+          )
+            .toString(16)
+            .toUpperCase()}`
+        );
+        pointerVisual.textContent = `meuArray = 0x${arrayBaseAddress
+          .toString(16)
+          .toUpperCase()};`;
         await sleep(500);
 
-        logMessage("Inicializando o array com emojis de animais...");
+        logMessage("Alocando e inicializando o array com valores...");
 
-        // Array de emojis de animais (expandido para suportar mais tamanhos)
-        const animalEmojis = [
-          "🐶",
-          "🐱",
-          "🐭",
-          "🐹",
-          "🐰",
-          "🦊",
-          "🐻",
-          "🐼",
-          "🐨",
-          "🐯",
+        // Array de valores de exemplo (expandido para suportar mais tamanhos)
+        const sampleValues = [
+          "A1",
+          "B2",
+          "C3",
+          "D4",
+          "E5",
+          "F6",
+          "G7",
+          "H8",
+          "I9",
+          "J0",
         ];
 
         for (let i = 0; i < ARRAY_SIZE; i++) {
-          const block = allBlocks[startIndex + i];
-          const value = animalEmojis[i % animalEmojis.length];
+          const cell = allCells[startIndex + i];
+          const value = sampleValues[i % sampleValues.length];
 
-          block.classList.remove("free");
-          block.classList.add("allocated");
-          block.querySelector(".value").textContent = value;
+          cell.classList.remove("free");
+          cell.classList.add("allocated");
+          cell.querySelector(".value").textContent = value;
 
-          allocatedBlocks.push(block); // Salva a referência
+          allocatedBlocks.push(cell); // Salva a referência
 
           // Destaque rápido para mostrar a escrita
-          block.classList.add("highlighted");
+          cell.classList.add("highlighted");
           await sleep(400);
-          block.classList.remove("highlighted");
+          cell.classList.remove("highlighted");
         }
 
-        logMessage("Array alocado e inicializado com sucesso.");
+        logMessage("Memória alocada e array inicializado com sucesso.");
         accessBtn.disabled = false;
       }
 
@@ -500,45 +536,66 @@
         // Validação
         if (index < 0 || index >= ARRAY_SIZE) {
           logMessage(
-            `ERRO: Índice ${index} está fora dos limites do array (0 a ${
-              ARRAY_SIZE - 1
-            }).`
+            `<strong>ERRO DE ACESSO:</strong> Índice ${index} inválido!`
           );
+          logMessage(
+            `Array tem ${ARRAY_SIZE} elementos: índices 0 a ${ARRAY_SIZE - 1}`
+          );
+          logMessage(`Índice ${index} não existe - lembre: começa do ZERO!`);
           accessBtn.disabled = false;
           return;
         }
 
-        logMessage(`Buscando valor em meuArray[${index}]...`);
+        logMessage(`Acessando posição de memória meuArray[${index}]...`);
         await sleep(1000);
 
-        // A MÁGICA DA ARITMÉTICA DE PONTEIROS
+        logMessage("<strong>ARITMÉTICA DE ENDEREÇOS:</strong>");
+        logMessage("Cálculo: Endereço = Endereço Base + Índice");
         logMessage(
-          "Cálculo: Endereço = Endereço Base + (Índice * Tamanho do Inteiro)"
+          `Ex: array[0] = 0x${arrayBaseAddress.toString(16).toUpperCase()} + 0`
+        );
+        logMessage(
+          `Ex: array[1] = 0x${arrayBaseAddress.toString(16).toUpperCase()} + 1`
         );
         await sleep(1500);
 
-        const targetAddress = arrayBaseAddress + index * SIZEOF_INT;
+        const targetAddress = arrayBaseAddress + index;
 
         logMessage(
-          `Cálculo: ${targetAddress} = ${arrayBaseAddress} + (${index} * ${SIZEOF_INT})`
+          `Cálculo: 0x${targetAddress
+            .toString(16)
+            .toUpperCase()} = 0x${arrayBaseAddress
+            .toString(16)
+            .toUpperCase()} + ${index}`
         );
         await sleep(1500);
 
-        // Encontra o bloco de memória no DOM
-        const targetBlock = document.querySelector(
-          `.memory-block[data-address="${targetAddress}"]`
+        // Encontra a célula de memória no DOM
+        const targetCell = document.querySelector(
+          `.memory-cell[data-address="${targetAddress}"]`
         );
 
-        if (targetBlock) {
-          logMessage(`Acessando endereço de memória ${targetAddress}...`);
-          targetBlock.classList.add("highlighted");
+        if (targetCell) {
+          logMessage("<strong>ACESSO DIRETO:</strong>");
+          logMessage(
+            `Acessando byte individual em: 0x${targetAddress
+              .toString(16)
+              .toUpperCase()}`
+          );
+          targetCell.classList.add("highlighted");
           await sleep(1000);
 
-          const value = targetBlock.querySelector(".value").textContent;
-          logMessage(`Valor encontrado em meuArray[${index}] é: ${value}`);
+          const value = targetCell.querySelector(".value").textContent;
+          logMessage(
+            `<strong>VALOR ENCONTRADO:</strong> ${value} na posição [${index}]`
+          );
         } else {
           // Isso não deve acontecer em nossa simulação controlada
-          logMessage(`ERRO: Endereço ${targetAddress} não encontrado!`);
+          logMessage(
+            `ERRO: Endereço 0x${targetAddress
+              .toString(16)
+              .toUpperCase()} não encontrado!`
+          );
         }
 
         accessBtn.disabled = false; // Reabilita o botão
