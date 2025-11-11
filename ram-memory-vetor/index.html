@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>Animação de Alocação de Array</title>
+    <style>
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui,
+          sans-serif;
+        background: #000000;
+        color: rgba(255, 255, 255, 0.92);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+        min-height: 100vh;
+        margin: 0;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      h2 {
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 2.125rem;
+        font-weight: 700;
+        letter-spacing: -0.022em;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        line-height: 1.2;
+        font-family: "Poppins", sans-serif;
+      }
+
+      #animation-container {
+        display: flex;
+        gap: 32px;
+        width: 100%;
+        max-width: 1200px;
+        justify-content: center;
+        align-items: stretch;
+        height: 600px;
+      }
+
+      /* Coluna da RAM */
+      #ram-container {
+        flex-basis: 50%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #ram {
+        display: flex;
+        flex-wrap: wrap;
+        border: none;
+        background: rgba(30, 30, 30, 0.7);
+        backdrop-filter: blur(20px) saturate(180%);
+        padding: 20px;
+        width: 100%;
+        max-width: 500px;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        flex: 1;
+        align-content: flex-start;
+        justify-content: center;
+      }
+
+      .memory-block {
+        width: 85px;
+        height: 70px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        margin: 5px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        font-size: 10px;
+        transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .memory-block .address {
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.4);
+        padding: 6px;
+        font-family: "IBM Plex Mono", "SF Mono", "Monaco", "Menlo", monospace;
+        font-size: 9px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 6px 6px 0 0;
+        letter-spacing: -0.03em;
+      }
+
+      .memory-block .value {
+        font-size: 1.8em;
+        font-weight: 600;
+        text-align: center;
+        padding-bottom: 6px;
+        color: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+      }
+
+      /* Estados da Memória */
+      .memory-block.free {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+
+      .memory-block.system {
+        background: rgba(142, 142, 147, 0.15);
+        border-color: rgba(142, 142, 147, 0.4);
+        border-width: 1px;
+        box-shadow: 0 4px 16px rgba(142, 142, 147, 0.15),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      }
+
+      .memory-block.allocated {
+        background: rgba(0, 122, 255, 0.15);
+        border-color: rgba(0, 122, 255, 0.4);
+        border-width: 1px;
+        box-shadow: 0 4px 16px rgba(0, 122, 255, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+      }
+
+      .memory-block.highlighted {
+        background: rgba(255, 149, 0, 0.2);
+        border-color: rgba(255, 149, 0, 0.6);
+        border-width: 2px;
+        transform: scale(1.05) translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 149, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        z-index: 10;
+      }
+
+      /* Coluna de Controle e Log */
+      #info-container {
+        flex-basis: 50%;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      #controls {
+        background: rgba(30, 30, 30, 0.7);
+        backdrop-filter: blur(20px) saturate(180%);
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      #controls button,
+      #controls input,
+      #controls label {
+        font-family: "Inter", sans-serif;
+        font-size: 15px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-weight: 600;
+        letter-spacing: -0.022em;
+      }
+
+      .control-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .control-row label {
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+        min-width: 70px;
+        padding: 0;
+      }
+
+      #controls button {
+        background: rgba(0, 122, 255, 0.9);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+      }
+
+      #controls button:hover:not(:disabled) {
+        background: rgba(0, 122, 255, 1);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(0, 122, 255, 0.35);
+      }
+
+      #controls button:disabled {
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.3);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      #controls input {
+        width: 80px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        color: rgba(255, 255, 255, 0.9);
+        flex-shrink: 0;
+      }
+
+      #controls input:focus {
+        outline: none;
+        border-color: rgba(0, 122, 255, 0.6);
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      #controls button {
+        flex: 1;
+        min-width: 0;
+      }
+
+      #pointer-visual {
+        font-family: "IBM Plex Mono", "SF Mono", "Monaco", "Menlo", monospace;
+        font-size: 14px;
+        font-weight: 500;
+        background: rgba(0, 0, 0, 0.6);
+        color: #00ff88;
+        padding: 16px;
+        border-radius: 10px;
+        margin-top: 16px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        letter-spacing: -0.03em;
+      }
+
+      #log {
+        background: rgba(30, 30, 30, 0.7);
+        backdrop-filter: blur(20px) saturate(180%);
+        height: 100%;
+        overflow-y: auto;
+        border: none;
+        padding: 20px;
+        font-family: "IBM Plex Mono", "SF Mono", "Monaco", "Menlo", monospace;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 1.4;
+        letter-spacing: -0.03em;
+        flex: 1;
+      }
+
+      #log p {
+        margin: 0 0 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 6px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      #log p:has(> strong[style*="color: red"]) {
+        color: rgba(255, 69, 58, 0.9);
+      }
+
+      /* Scrollbar styling */
+      #log::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      #log::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 2px;
+      }
+
+      #log::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+      }
+
+      #log::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="animation-container">
+      <div id="ram-container">
+        <h2>Visualização da Memória RAM</h2>
+        <div id="ram"></div>
+      </div>
+
+      <div id="info-container">
+        <h2>&nbsp;</h2>
+
+        <div id="controls">
+          <div class="control-row">
+            <label for="array-size-input">Tamanho:</label>
+            <input
+              type="number"
+              id="array-size-input"
+              value="5"
+              min="1"
+              max="10"
+            />
+            <button id="alloc-btn">Alocar Array</button>
+          </div>
+
+          <div class="control-row">
+            <label for="index-input">Índice:</label>
+            <input type="number" id="index-input" value="0" min="0" max="4" />
+            <button id="access-btn" disabled>Buscar Índice</button>
+          </div>
+
+          <div id="pointer-visual">int* meuArray = NULL;</div>
+        </div>
+
+        <div id="log">
+          <p>Clique em "Alocar Array" para começar...</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- Configurações Globais ---
+      const RAM_SIZE = 30; // Número total de blocos na nossa RAM simulada
+      let ARRAY_SIZE = 5; // Tamanho do nosso array de inteiros (agora dinâmico)
+      const SIZEOF_INT = 4; // Tamanho em "bytes" de um int (para cálculo de endereço)
+      const START_ADDRESS = 1000; // Endereço de memória inicial
+
+      // --- Estado da Aplicação ---
+      let arrayBaseAddress = null; // Onde o array foi alocado
+      let allocatedBlocks = []; // Referências para os blocos do DOM
+
+      // --- Referências do DOM ---
+      const ramContainer = document.getElementById("ram");
+      const logContainer = document.getElementById("log");
+      const allocBtn = document.getElementById("alloc-btn");
+      const accessBtn = document.getElementById("access-btn");
+      const indexInput = document.getElementById("index-input");
+      const arraySizeInput = document.getElementById("array-size-input");
+      const pointerVisual = document.getElementById("pointer-visual");
+
+      // --- Funções Auxiliares ---
+
+      /** Pausa a execução por um tempo (em ms) */
+      const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+
+      /** Adiciona uma mensagem ao log */
+      function logMessage(message) {
+        console.log(message);
+        logContainer.innerHTML += `<p>> ${message}</p>`;
+        logContainer.scrollTop = logContainer.scrollHeight; // Rola para o final
+      }
+
+      /** Limpa destaques anteriores */
+      function clearHighlights() {
+        document.querySelectorAll(".memory-block.highlighted").forEach((b) => {
+          b.classList.remove("highlighted");
+        });
+      }
+
+      /** Reseta a simulação */
+      function resetSimulation() {
+        logMessage("Resetando simulação...");
+        arrayBaseAddress = null;
+        allocatedBlocks = [];
+        pointerVisual.textContent = "int* meuArray = NULL;";
+        allocBtn.disabled = false;
+        accessBtn.disabled = true;
+        createRAM(); // Recria a RAM
+      }
+
+      /** Atualiza o limite máximo do índice baseado no tamanho do array */
+      function updateIndexLimit() {
+        const newSize = parseInt(arraySizeInput.value);
+        indexInput.max = newSize - 1;
+        if (parseInt(indexInput.value) >= newSize) {
+          indexInput.value = 0;
+        }
+      }
+
+      // --- Funções Principais da Animação ---
+
+      /** 1. Cria a representação visual da RAM */
+      function createRAM() {
+        ramContainer.innerHTML = ""; // Limpa a RAM antiga
+        for (let i = 0; i < RAM_SIZE; i++) {
+          const address = START_ADDRESS + i * SIZEOF_INT;
+          const block = document.createElement("div");
+
+          // Primeiros 4 blocos são ocupados pelo sistema
+          if (i < 4) {
+            block.className = "memory-block system";
+            block.innerHTML = `
+                      <span class="address">${address}</span>
+                      <span class="value">📦</span>
+                  `;
+          } else {
+            block.className = "memory-block free";
+            block.innerHTML = `
+                      <span class="address">${address}</span>
+                      <span class="value">?</span>
+                  `;
+          }
+
+          block.dataset.address = address;
+          ramContainer.appendChild(block);
+        }
+      }
+
+      /** 2. Animação de Alocação */
+      async function handleAllocation() {
+        // Atualiza o tamanho do array baseado no input
+        ARRAY_SIZE = parseInt(arraySizeInput.value);
+
+        resetSimulation(); // Reseta se já houver algo
+        allocBtn.disabled = true;
+        logMessage(`Iniciando alocação para int meuArray[${ARRAY_SIZE}]...`);
+        await sleep(1000);
+
+        // Simula a busca por espaço contíguo.
+        // Em vez de um algoritmo complexo, vamos apenas escolher um local fixo (ex: bloco 4)
+        const startIndex = 4;
+        const allBlocks = document.querySelectorAll(".memory-block");
+
+        logMessage(
+          `Sistema Operacional encontrou ${ARRAY_SIZE} blocos contíguos livres...`
+        );
+        await sleep(1000);
+
+        // Pega o endereço base
+        arrayBaseAddress = parseInt(allBlocks[startIndex].dataset.address);
+        logMessage(`Endereço base alocado: ${arrayBaseAddress}`);
+        pointerVisual.textContent = `int* meuArray = ${arrayBaseAddress};`;
+        await sleep(500);
+
+        logMessage("Inicializando o array com emojis de animais...");
+
+        // Array de emojis de animais (expandido para suportar mais tamanhos)
+        const animalEmojis = [
+          "🐶",
+          "🐱",
+          "🐭",
+          "🐹",
+          "🐰",
+          "🦊",
+          "🐻",
+          "🐼",
+          "🐨",
+          "🐯",
+        ];
+
+        for (let i = 0; i < ARRAY_SIZE; i++) {
+          const block = allBlocks[startIndex + i];
+          const value = animalEmojis[i % animalEmojis.length];
+
+          block.classList.remove("free");
+          block.classList.add("allocated");
+          block.querySelector(".value").textContent = value;
+
+          allocatedBlocks.push(block); // Salva a referência
+
+          // Destaque rápido para mostrar a escrita
+          block.classList.add("highlighted");
+          await sleep(400);
+          block.classList.remove("highlighted");
+        }
+
+        logMessage("Array alocado e inicializado com sucesso.");
+        accessBtn.disabled = false;
+      }
+
+      /** 3. Animação de Busca (Acesso) */
+      async function handleAccess() {
+        clearHighlights();
+        accessBtn.disabled = true; // Desabilita durante a animação
+
+        const index = parseInt(indexInput.value);
+
+        // Validação
+        if (index < 0 || index >= ARRAY_SIZE) {
+          logMessage(
+            `ERRO: Índice ${index} está fora dos limites do array (0 a ${
+              ARRAY_SIZE - 1
+            }).`
+          );
+          accessBtn.disabled = false;
+          return;
+        }
+
+        logMessage(`Buscando valor em meuArray[${index}]...`);
+        await sleep(1000);
+
+        // A MÁGICA DA ARITMÉTICA DE PONTEIROS
+        logMessage(
+          "Cálculo: Endereço = Endereço Base + (Índice * Tamanho do Inteiro)"
+        );
+        await sleep(1500);
+
+        const targetAddress = arrayBaseAddress + index * SIZEOF_INT;
+
+        logMessage(
+          `Cálculo: ${targetAddress} = ${arrayBaseAddress} + (${index} * ${SIZEOF_INT})`
+        );
+        await sleep(1500);
+
+        // Encontra o bloco de memória no DOM
+        const targetBlock = document.querySelector(
+          `.memory-block[data-address="${targetAddress}"]`
+        );
+
+        if (targetBlock) {
+          logMessage(`Acessando endereço de memória ${targetAddress}...`);
+          targetBlock.classList.add("highlighted");
+          await sleep(1000);
+
+          const value = targetBlock.querySelector(".value").textContent;
+          logMessage(`Valor encontrado em meuArray[${index}] é: ${value}`);
+        } else {
+          // Isso não deve acontecer em nossa simulação controlada
+          logMessage(`ERRO: Endereço ${targetAddress} não encontrado!`);
+        }
+
+        accessBtn.disabled = false; // Reabilita o botão
+      }
+
+      // --- Inicialização ---
+      document.addEventListener("DOMContentLoaded", () => {
+        createRAM();
+        allocBtn.addEventListener("click", handleAllocation);
+        accessBtn.addEventListener("click", handleAccess);
+        arraySizeInput.addEventListener("input", updateIndexLimit);
+        updateIndexLimit(); // Configura limite inicial
+      });
+    </script>
+  </body>
+</html>
