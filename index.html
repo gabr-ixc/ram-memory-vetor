@@ -305,7 +305,7 @@
   <body>
     <div id="animation-container">
       <div id="ram-container">
-        <h2>Simulação de Memória RAM (Bytes)</h2>
+        <h2>Simulação de Memória RAM</h2>
         <div id="ram"></div>
       </div>
 
@@ -448,7 +448,9 @@
         resetSimulation(); // Reseta se já houver algo
         allocBtn.disabled = true;
         logMessage("<strong>MEMÓRIA RAM - CONCEITOS FUNDAMENTAIS</strong>");
-        logMessage("• Array: bytes contíguos | Índices: 0 a N-1 | 24 bytes: alinhamento otimizado");
+        logMessage(
+          "Array: bytes contíguos | Índices: 0 a N-1 | 24 bytes: alinhamento otimizado"
+        );
         await sleep(2000);
         logMessage(
           `Iniciando alocação de memória para meuArray[${ARRAY_SIZE}] bytes...`
@@ -470,18 +472,6 @@
         logMessage("<strong>ENDEREÇO BASE:</strong>");
         logMessage(
           `Primeiro byte do array: 0x${arrayBaseAddress
-            .toString(16)
-            .toUpperCase()}`
-        );
-        logMessage(
-          `array[0] está em: 0x${arrayBaseAddress.toString(16).toUpperCase()}`
-        );
-        logMessage(
-          `array[${ARRAY_SIZE - 1}] estará em: 0x${(
-            arrayBaseAddress +
-            ARRAY_SIZE -
-            1
-          )
             .toString(16)
             .toUpperCase()}`
         );
@@ -551,12 +541,6 @@
 
         logMessage("<strong>ARITMÉTICA DE ENDEREÇOS:</strong>");
         logMessage("Cálculo: Endereço = Endereço Base + Índice");
-        logMessage(
-          `Ex: array[0] = 0x${arrayBaseAddress.toString(16).toUpperCase()} + 0`
-        );
-        logMessage(
-          `Ex: array[1] = 0x${arrayBaseAddress.toString(16).toUpperCase()} + 1`
-        );
         await sleep(1500);
 
         const targetAddress = arrayBaseAddress + index;
