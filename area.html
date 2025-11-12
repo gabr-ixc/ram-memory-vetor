@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prova Visual da Fórmula de Laçaria (Triângulo)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+        font-weight: 700;
+      }
+      .poppins {
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-white text-gray-900 flex items-center justify-center min-h-screen p-6"
+  >
+    <div class="max-w-6xl w-full">
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-5xl font-bold text-gray-900 mb-3 tracking-tight">
+          Fórmula Shoelace
+        </h1>
+        <p class="text-lg text-gray-500 font-medium">
+          Visualização interativa da área através de trapézios
+        </p>
+      </div>
+
+      <!-- Canvas para a visualização -->
+      <div class="bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-sm mb-8">
+        <div class="relative" style="height: 500px">
+          <canvas id="shoelaceCanvas" class="absolute top-0 left-0"></canvas>
+        </div>
+      </div>
+
+      <!-- Controles -->
+      <div class="flex items-center justify-center gap-4 mb-8">
+        <button
+          id="nextStepBtn"
+          class="bg-black hover:bg-gray-800 text-white font-medium py-3 px-8 rounded-full transition-all duration-200 ease-in-out shadow-sm"
+        >
+          Próxima Aresta
+        </button>
+        <button
+          id="resetBtn"
+          class="bg-gray-200 hover:bg-gray-300 text-gray-900 font-medium py-3 px-8 rounded-full transition-all duration-200 ease-in-out"
+        >
+          Reiniciar
+        </button>
+      </div>
+
+      <!-- Info Box -->
+      <div class="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-12">
+        <p id="explanation" class="text-gray-700 text-center text-base leading-relaxed">
+          Iniciando com o triângulo ABC. A área do triângulo (em cinza) é o que queremos encontrar.
+        </p>
+        <div class="mt-4 text-center">
+          <span class="text-sm font-medium text-gray-600">Área Acumulada:</span>
+          <span id="areaTotal" class="ml-2 text-2xl font-bold text-blue-600">0.00</span>
+        </div>
+      </div>
+
+      <!-- Seção de Cálculo Passo a Passo -->
+      <div class="space-y-8">
+        <div class="text-center mb-8">
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">
+            Entenda a Matemática
+          </h2>
+          <p class="text-gray-500">Veja como a fórmula funciona passo a passo</p>
+        </div>
+
+        <!-- Relação com Determinantes 2x2 -->
+        <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 border border-purple-100">
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">
+            Conexão com Determinantes 2×2
+          </h3>
+          <p class="text-gray-700 mb-6 leading-relaxed">
+            A fórmula Shoelace está diretamente relacionada com determinantes de matrizes 2×2. 
+            Para cada aresta do polígono, calculamos um determinante:
+          </p>
+          
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl p-6 border border-purple-200">
+              <h4 class="font-bold text-gray-900 mb-3 text-lg">Determinante 2×2</h4>
+              <div class="bg-purple-50 p-4 rounded-lg mb-4 text-center">
+                <div class="font-mono text-lg">
+                  <div class="mb-2">det = x₁ · y₂ - x₂ · y₁</div>
+                </div>
+              </div>
+              <div class="text-sm text-gray-600 space-y-2">
+                <p>Para a aresta de (x₁, y₁) até (x₂, y₂):</p>
+                <p class="font-mono bg-gray-50 p-2 rounded">
+                  | x₁  x₂ |<br>
+                  | y₁  y₂ | = x₁y₂ - x₂y₁
+                </p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 border border-purple-200">
+              <h4 class="font-bold text-gray-900 mb-3 text-lg">Equivalência com Trapézio</h4>
+              <div class="bg-purple-50 p-4 rounded-lg mb-4 text-center">
+                <div class="font-mono text-base">
+                  <div>x₁y₂ - x₂y₁ =</div>
+                  <div class="mt-2">(y₁ + y₂) · (x₂ - x₁) / 2</div>
+                </div>
+              </div>
+              <div class="text-sm text-gray-600">
+                <p class="mb-2">Expandindo o determinante:</p>
+                <p class="font-mono text-xs bg-gray-50 p-2 rounded">
+                  x₁y₂ - x₂y₁ = x₁y₂ - x₂y₁<br>
+                  = (x₂ - x₁)(y₁ + y₂)/2
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 bg-white rounded-xl p-6 border border-purple-200">
+            <h4 class="font-bold text-gray-900 mb-3 text-lg">Fórmula Final</h4>
+            <p class="text-gray-700 mb-3 text-sm leading-relaxed">
+              A área do polígono é metade da soma algébrica de todos os determinantes:
+            </p>
+            <div class="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-lg text-center">
+              <div class="font-mono text-lg font-semibold text-gray-900">
+                Área = ½ |Σ (x<sub>i</sub>y<sub>i+1</sub> - x<sub>i+1</sub>y<sub>i</sub>)|
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Matriz de Pontos -->
+        <div class="bg-white rounded-2xl p-8 border border-gray-200">
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">
+            1. Matriz dos Vértices
+          </h3>
+          <p class="text-gray-600 mb-6">
+            Organizamos os pontos em uma matriz, repetindo o primeiro ponto no final:
+          </p>
+          <div class="flex justify-center">
+            <table class="border border-gray-200 text-center rounded-lg overflow-hidden shadow-sm" style="border-collapse: collapse;">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="border-b border-gray-200 px-8 py-3 font-semibold text-gray-900">Vértice</th>
+                  <th class="border-b border-l border-gray-200 px-8 py-3 font-semibold text-gray-900">x</th>
+                  <th class="border-b border-l border-gray-200 px-8 py-3 font-semibold text-gray-900">y</th>
+                </tr>
+              </thead>
+              <tbody id="matrixTable" class="bg-white">
+                <tr class="hover:bg-gray-50 transition">
+                  <td class="border-b border-gray-200 px-8 py-3 font-semibold text-gray-900">A</td>
+                  <td class="border-b border-l border-gray-200 px-8 py-3 text-gray-700">0.5</td>
+                  <td class="border-b border-l border-gray-200 px-8 py-3 text-gray-700">2</td>
+                </tr>
+                <tr class="hover:bg-gray-50 transition">
+                  <td class="border-b border-gray-200 px-8 py-3 font-semibold text-gray-900">B</td>
+                  <td class="border-b border-l border-gray-200 px-8 py-3 text-gray-700">3</td>
+                  <td class="border-b border-l border-gray-200 px-8 py-3 text-gray-700">3</td>
+                </tr>
+                <tr class="hover:bg-gray-50 transition">
+                  <td class="border-b border-gray-200 px-8 py-3 font-semibold text-gray-900">C</td>
+                  <td class="border-b border-l border-gray-200 px-8 py-3 text-gray-700">5</td>
+                  <td class="border-b border-l border-gray-200 px-8 py-3 text-gray-700">1</td>
+                </tr>
+                <tr class="bg-blue-50 hover:bg-blue-100 transition">
+                  <td class="px-8 py-3 font-semibold text-blue-900">A (repetido)</td>
+                  <td class="border-l border-gray-200 px-8 py-3 text-blue-700">0.5</td>
+                  <td class="border-l border-gray-200 px-8 py-3 text-blue-700">2</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Explicação da Área do Trapézio -->
+        <div class="bg-white rounded-2xl p-8 border border-gray-200">
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">
+            2. O que é a Área do Trapézio?
+          </h3>
+          <div class="grid md:grid-cols-2 gap-8">
+            <div>
+              <p class="text-gray-700 mb-4 font-medium">
+                Fórmula do Trapézio
+              </p>
+              <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200 mb-6">
+                <p class="font-mono text-center text-xl text-gray-900">
+                  Área = ½ × (base₁ + base₂) × altura
+                </p>
+              </div>
+              <div class="space-y-3 text-gray-700">
+                <p class="font-medium text-gray-900 mb-3">Aplicando ao nosso caso:</p>
+                <div class="flex items-start">
+                  <span class="w-2 h-2 rounded-full bg-blue-500 mt-2 mr-3"></span>
+                  <p><strong class="text-gray-900">base₁</strong> = y do primeiro ponto (y₁)</p>
+                </div>
+                <div class="flex items-start">
+                  <span class="w-2 h-2 rounded-full bg-blue-500 mt-2 mr-3"></span>
+                  <p><strong class="text-gray-900">base₂</strong> = y do segundo ponto (y₂)</p>
+                </div>
+                <div class="flex items-start">
+                  <span class="w-2 h-2 rounded-full bg-blue-500 mt-2 mr-3"></span>
+                  <p><strong class="text-gray-900">altura</strong> = diferença em x (x₂ - x₁)</p>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-center">
+              <svg width="240" height="180" viewBox="0 0 240 180" class="border border-gray-200 rounded-xl bg-gray-50 shadow-sm">
+                <!-- Eixo X -->
+                <line x1="20" y1="150" x2="220" y2="150" stroke="#9ca3af" stroke-width="2"/>
+                <!-- Trapézio exemplo -->
+                <polygon points="50,150 50,60 190,90 190,150" fill="rgba(59, 130, 246, 0.2)" stroke="#3b82f6" stroke-width="2.5"/>
+                <!-- Linhas de medida -->
+                <line x1="50" y1="60" x2="190" y2="60" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,4"/>
+                <line x1="50" y1="90" x2="190" y2="90" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,4"/>
+                <!-- Rótulos -->
+                <text x="25" y="65" fill="#ef4444" font-size="14" font-weight="600">y₁</text>
+                <text x="25" y="95" fill="#ef4444" font-size="14" font-weight="600">y₂</text>
+                <text x="95" y="170" fill="#10b981" font-size="14" font-weight="600">altura (Δx)</text>
+                <!-- Linha de altura -->
+                <line x1="120" y1="60" x2="120" y2="150" stroke="#10b981" stroke-width="2.5"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cálculos Detalhados -->
+        <div class="bg-white rounded-2xl p-8 border border-gray-200">
+          <h3 class="text-2xl font-bold text-gray-900 mb-6">
+            3. Cálculos para Cada Aresta
+          </h3>
+          <div id="stepByStepCalc" class="space-y-4">
+            <div class="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+              <p class="text-gray-400 text-base">
+                Clique em "Próxima Aresta" para ver os cálculos aparecerem
+              </p>
+            </div>
+          </div>
+          
+          <!-- Resultado Final -->
+          <div id="finalResult" class="mt-8 p-8 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-200 hidden">
+            <h4 class="font-bold text-green-900 text-center text-2xl mb-3">
+              Resultado Final
+            </h4>
+            <p class="text-center text-gray-700 text-lg mb-2" id="finalFormula"></p>
+            <p class="text-center text-3xl font-bold text-green-700 mt-4" id="finalArea"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.onload = () => {
+        const canvas = document.getElementById("shoelaceCanvas");
+        const ctx = canvas.getContext("2d");
+        const container = canvas.parentElement;
+
+        const nextStepBtn = document.getElementById("nextStepBtn");
+        const resetBtn = document.getElementById("resetBtn");
+        const explanationEl = document.getElementById("explanation");
+        const areaTotalEl = document.getElementById("areaTotal");
+        const stepByStepCalc = document.getElementById("stepByStepCalc");
+        const finalResult = document.getElementById("finalResult");
+        const finalFormula = document.getElementById("finalFormula");
+        const finalArea = document.getElementById("finalArea");
+
+        // Definindo os vértices do triângulo conforme sua imagem
+        // (0.5, 2), (3, 3), (5, 1)
+        const rawPoints = [
+          { x: 0.5, y: 2 }, // A
+          { x: 3, y: 3 }, // B
+          { x: 5, y: 1 }, // C
+        ];
+
+        // Variáveis de estado
+        let vertices = [];
+        let currentStep = -1; // -1 = inicial, 0..n-1 = arestas
+        let totalArea = 0;
+        let calculations = []; // Armazena os cálculos de cada etapa
+
+        // Escala e offset para o canvas
+        const scale = 80; // 1 unidade na grade = 80 pixels
+        const offsetX = 50; // Offset para não cortar a esquerda
+        const offsetY = 50; // Offset para não cortar o topo
+
+        // Função para remapear coordenadas do mundo para o canvas
+        function worldToCanvas(worldX, worldY) {
+          // Inverte Y para que (0,0) seja no canto inferior esquerdo como em um gráfico matemático
+          return {
+            x: worldX * scale + offsetX,
+            y: canvas.height - (worldY * scale + offsetY),
+          };
+        }
+
+        // Função para mapear os vértices para as coordenadas do canvas
+        function mapVerticesToCanvas() {
+          vertices = rawPoints.map((p) => worldToCanvas(p.x, p.y));
+        }
+
+        // --- Funções de Desenho ---
+
+        function resizeCanvas() {
+          canvas.width = container.clientWidth;
+          canvas.height = container.clientHeight;
+          mapVerticesToCanvas();
+          draw(); // Redesenha tudo
+        }
+
+        // Desenha os eixos X e Y e a grade
+        function drawAxesAndGrid() {
+          const xAxisY = canvas.height - offsetY;
+          const yAxisX = offsetX;
+
+          ctx.beginPath();
+          ctx.strokeStyle = "#e0e0e0"; // Cor da grade
+          ctx.lineWidth = 1;
+
+          // Grade e ticks do Eixo X
+          for (let x = 0; x * scale + offsetX < canvas.width; x++) {
+            ctx.moveTo(x * scale + offsetX, offsetY);
+            ctx.lineTo(x * scale + offsetX, xAxisY);
+            if (x > 0) {
+              // Desenha números
+              ctx.fillText(x, x * scale + offsetX - 5, xAxisY + 15);
+            }
+          }
+          // Grade e ticks do Eixo Y
+          for (let y = 0; y * scale + offsetY < canvas.height; y++) {
+            ctx.moveTo(offsetX, canvas.height - (y * scale + offsetY));
+            ctx.lineTo(
+              canvas.width - offsetX,
+              canvas.height - (y * scale + offsetY)
+            );
+            if (y > 0) {
+              // Desenha números
+              ctx.fillText(
+                y,
+                yAxisX - 20,
+                canvas.height - (y * scale + offsetY) + 5
+              );
+            }
+          }
+          ctx.stroke();
+
+          // Desenha os eixos principais
+          ctx.beginPath();
+          ctx.strokeStyle = "#aaa";
+          ctx.lineWidth = 2;
+          ctx.moveTo(yAxisX, offsetY);
+          ctx.lineTo(yAxisX, xAxisY); // Eixo Y
+          ctx.moveTo(yAxisX, xAxisY);
+          ctx.lineTo(canvas.width - offsetX, xAxisY); // Eixo X
+          ctx.stroke();
+
+          ctx.fillStyle = "#aaa";
+          ctx.font = "12px Inter";
+          ctx.fillText("0", yAxisX - 10, xAxisY + 15);
+        }
+
+        // Desenha o polígono principal (preenchido)
+        function drawPolygon() {
+          ctx.beginPath();
+          ctx.moveTo(vertices[0].x, vertices[0].y);
+          for (let i = 1; i < vertices.length; i++) {
+            ctx.lineTo(vertices[i].x, vertices[i].y);
+          }
+          ctx.closePath();
+          ctx.fillStyle = "rgba(128, 128, 128, 0.2)"; // Cinza claro
+          ctx.fill();
+          ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Desenha os vértices e seus rótulos
+          const labels = ["A", "B", "C"];
+          rawPoints.forEach((p, i) => {
+            const canvasP = vertices[i];
+            ctx.beginPath();
+            ctx.arc(canvasP.x, canvasP.y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = "#333";
+            ctx.fill();
+            ctx.font = "bold 14px Inter";
+            ctx.fillStyle = "#333";
+            ctx.fillText(
+              `${labels[i]} (${p.x}, ${p.y})`,
+              canvasP.x + 10,
+              canvasP.y - 5
+            );
+          });
+        }
+
+        // Atualiza a seção de cálculos passo a passo
+        function updateStepByStepCalculations() {
+          stepByStepCalc.innerHTML = '';
+          
+          if (calculations.length === 0) {
+            stepByStepCalc.innerHTML = `
+              <div class="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+                <p class="text-gray-400 text-base">
+                  Clique em "Próxima Aresta" para ver os cálculos aparecerem
+                </p>
+              </div>
+            `;
+            finalResult.classList.add('hidden');
+            return;
+          }
+
+          calculations.forEach((calc, index) => {
+            const bgClass = calc.isPositive ? 'bg-green-50' : 'bg-red-50';
+            const borderClass = calc.isPositive ? 'border-green-200' : 'border-red-200';
+            const badgeClass = calc.isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+            const signSymbol = calc.isPositive ? '+' : '';
+            const actionText = calc.isPositive ? 'Adicionar' : 'Subtrair';
+            
+            const calcDiv = document.createElement('div');
+            calcDiv.className = `${bgClass} border ${borderClass} rounded-2xl p-6 transition-all hover:shadow-md`;
+            calcDiv.innerHTML = `
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-bold text-gray-900">Aresta ${index + 1}: ${calc.label}</h4>
+                <span class="text-xs font-semibold px-3 py-1.5 rounded-full ${badgeClass}">
+                  ${actionText}
+                </span>
+              </div>
+              
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="bg-white rounded-xl p-4 border border-gray-200">
+                  <p class="font-semibold text-gray-900 mb-2 text-sm">Dados</p>
+                  <p class="font-mono text-sm text-gray-700">x₁ = ${calc.x1}, y₁ = ${calc.y1}</p>
+                  <p class="font-mono text-sm text-gray-700">x₂ = ${calc.x2}, y₂ = ${calc.y2}</p>
+                </div>
+                
+                <div class="bg-white rounded-xl p-4 border border-gray-200">
+                  <p class="font-semibold text-gray-900 mb-2 text-sm">Fórmula</p>
+                  <p class="font-mono text-sm text-gray-700">Área = ½(y₁ + y₂)(x₂ - x₁)</p>
+                </div>
+              </div>
+              
+              <div class="mt-4 bg-white rounded-xl p-4 border border-gray-200">
+                <p class="font-semibold text-gray-900 mb-2 text-sm">Cálculo</p>
+                <p class="font-mono text-sm text-gray-700">= ½ × (${calc.y1} + ${calc.y2}) × (${calc.x2} - ${calc.x1})</p>
+                <p class="font-mono text-sm text-gray-700">= ½ × ${calc.sumY} × ${calc.dx}</p>
+                <p class="font-mono text-base font-bold text-gray-900 mt-2">= ${signSymbol}${calc.area}</p>
+              </div>
+            `;
+            stepByStepCalc.appendChild(calcDiv);
+          });
+
+          // Mostra o resultado final se todas as arestas foram calculadas
+          if (calculations.length === rawPoints.length) {
+            finalResult.classList.remove('hidden');
+            const formulaParts = calculations.map((c, i) => 
+              `${c.isPositive ? '+' : ''}${c.area}`
+            ).join(' ');
+            finalFormula.textContent = `Área = ${formulaParts}`;
+            finalArea.textContent = `Área = ${totalArea.toFixed(2)} unidades²`;
+          }
+        }
+
+        // Desenha o trapézio para uma aresta específica
+        function drawTrapezoid(step) {
+          if (step < 0 || step >= vertices.length) return;
+
+          const p1_canvas = vertices[step];
+          const p2_canvas = vertices[(step + 1) % vertices.length];
+
+          const p1_world = rawPoints[step];
+          const p2_world = rawPoints[(step + 1) % rawPoints.length];
+
+          const labels = ["A", "B", "C"];
+          const p1_label = labels[step];
+          const p2_label = labels[(step + 1) % vertices.length];
+
+          // Eixo X no canvas (onde y=0 no mundo)
+          const xAxisY_canvas = canvas.height - offsetY;
+
+          const dx_world = p2_world.x - p1_world.x;
+          const isPositiveArea = dx_world > 0;
+
+          // Cor verde para positivo, vermelho para negativo
+          ctx.fillStyle = isPositiveArea
+            ? "rgba(0, 180, 100, 0.5)"
+            : "rgba(255, 80, 80, 0.5)";
+          ctx.strokeStyle = isPositiveArea
+            ? "rgb(0, 180, 100)"
+            : "rgb(255, 80, 80)";
+          ctx.lineWidth = 1;
+
+          ctx.beginPath();
+          ctx.moveTo(p1_canvas.x, p1_canvas.y); // Ponto 1 no polígono
+          ctx.lineTo(p2_canvas.x, p2_canvas.y); // Ponto 2 no polígono
+          ctx.lineTo(p2_canvas.x, xAxisY_canvas); // Ponto 2 no eixo X
+          ctx.lineTo(p1_canvas.x, xAxisY_canvas); // Ponto 1 no eixo X
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Calcula a área usando as coordenadas do mundo
+          // Área do trapézio = 0.5 * (base1 + base2) * altura
+          // Bases são os valores y, altura é a diferença em x
+          const trapezoidArea =
+            0.5 * (p1_world.y + p2_world.y) * (p2_world.x - p1_world.x);
+
+          totalArea += trapezoidArea;
+
+          // Armazena os dados do cálculo
+          const sumY = p1_world.y + p2_world.y;
+          calculations.push({
+            label: `${p1_label} → ${p2_label}`,
+            x1: p1_world.x,
+            y1: p1_world.y,
+            x2: p2_world.x,
+            y2: p2_world.y,
+            dx: (p2_world.x - p1_world.x).toFixed(2),
+            sumY: sumY.toFixed(2),
+            area: trapezoidArea.toFixed(2),
+            isPositive: isPositiveArea
+          });
+
+          // Atualiza a explicação
+          if (isPositiveArea) {
+            explanationEl.innerText = `Aresta ${p1_label} (${p1_world.x}, ${
+              p1_world.y
+            }) -> ${p2_label} (${p2_world.x}, ${
+              p2_world.y
+            }): (x aumenta). ADICIONANDO área verde. Área do trapézio = ${trapezoidArea.toFixed(
+              2
+            )}`;
+          } else {
+            explanationEl.innerText = `Aresta ${p1_label} (${p1_world.x}, ${
+              p1_world.y
+            }) -> ${p2_label} (${p2_world.x}, ${
+              p2_world.y
+            }): (x diminui). SUBTRAINDO área vermelha. Área do trapézio = ${trapezoidArea.toFixed(
+              2
+            )}`;
+          }
+
+          areaTotalEl.innerText = totalArea.toFixed(2);
+        }
+
+        // Função principal de desenho
+        function draw() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          totalArea = 0; // <--- CORREÇÃO DO BUG: Reseta a área total antes de redesenhar
+          calculations = []; // Limpa os cálculos para recalcular
+
+          drawAxesAndGrid();
+          drawPolygon();
+
+          // Desenha todos os trapézios até o passo atual
+          for (let i = 0; i <= currentStep; i++) {
+            drawTrapezoid(i);
+          }
+
+          // Atualiza a seção de cálculos passo a passo
+          updateStepByStepCalculations();
+
+          if (currentStep >= vertices.length - 1) {
+            nextStepBtn.disabled = true;
+            explanationEl.innerText = `Completo! A soma das áreas dos trapézios (verdes - vermelhas) é igual à área do polígono. Resultado final: ${totalArea.toFixed(
+              2
+            )}`;
+          } else {
+            nextStepBtn.disabled = false;
+          }
+        }
+
+        // --- Controles ---
+
+        function nextStep() {
+          if (currentStep < vertices.length - 1) {
+            currentStep++;
+            draw();
+          }
+        }
+
+        function reset() {
+          currentStep = -1;
+          totalArea = 0;
+          areaTotalEl.innerText = "0.00";
+          explanationEl.innerText =
+            "Reiniciado. A área do triângulo (em cinza) é o que queremos encontrar.";
+          draw();
+        }
+
+        // Event Listeners
+        nextStepBtn.addEventListener("click", nextStep);
+        resetBtn.addEventListener("click", reset);
+
+        // Redimensiona o canvas quando a janela muda de tamanho
+        window.addEventListener("resize", resizeCanvas);
+
+        // Inicialização
+        resizeCanvas(); // Define o tamanho inicial e desenha
+        reset(); // Define o estado inicial
+      };
+    </script>
+  </body>
+</html>
